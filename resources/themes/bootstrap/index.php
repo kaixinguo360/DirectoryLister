@@ -1,18 +1,21 @@
 <!DOCTYPE html>
 <?php 
+include("Parsedown.php");
+$Parsedown = new Parsedown();
 header("Content-type: text/html; charset=utf-8"); 
 $md_path_all = $lister->getListedPath();
 $md_path = explode("com", $md_path_all);
 if($md_path[1] != ""){
 	$md_path_last = substr($md_path[1], -1);
 	if($md_path_last != "/"){
-		$md_file = ".".$md_path[1]."/README.html";
+		$md_file = ".".$md_path[1]."/README.md";
 	}else{
-		$md_file = ".".$md_path[1]."README.html";
+		$md_file = ".".$md_path[1]."README.md";
 	}
 }
 if(file_exists($md_file)){
 	$md_text = file_get_contents($md_file);
+	$md_text = "<div class=\"container readme-background\"><div class=\"readme\">".$Parsedown -> text($md_text)."</div></div>";
 }else{
 	$md_text = "";
 }
