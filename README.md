@@ -35,7 +35,7 @@ Github打包：https://github.com/ToyoDAdoubi/DirectoryLister/archive/master.zip
 │   ├ config.php
 │   └ fileTypes.php
 │
-├ README.html # 文件夹内的 说明简介文件 #
+├ README.md # 文件夹内的 说明简介文件 #
 ├ index.php
 │
 ├─ 测试文件夹
