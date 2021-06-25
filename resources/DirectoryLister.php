@@ -20,6 +20,7 @@ class DirectoryLister {
 
     // Reserve some variables
     protected $_themeName     = null;
+    protected $_baseDir       = null;
     protected $_directory     = null;
     protected $_appDir        = null;
     protected $_appURL        = null;
@@ -60,6 +61,8 @@ class DirectoryLister {
         // 设置主题名称
         $this->_themeName = $this->_config['theme_name'];
 
+        // 设置数据路径
+        $this->_baseDir = isset($this->_config['base_dir']) ? $this->_config['base_dir'] : '.';
     }
 
      /**
@@ -98,7 +101,7 @@ class DirectoryLister {
             $filename_no_ext = basename($directory);
 
             if ($directory == '.') {
-                $filename_no_ext = 'DOUBI Soft';
+                $filename_no_ext = 'Kaixinguo\'s files';
             }
 
             // We deliver a zip file
@@ -108,7 +111,7 @@ class DirectoryLister {
             header("Content-Disposition: attachment; filename=\"$filename_no_ext.zip\"");
 
             //change directory so the zip file doesnt have a tree structure in it.
-            chdir($directory);
+            chdir($this->absDir($directory));
 
             // TODO: Probably we have to parse exclude list more carefully
             $exclude_list = implode(' ', array_merge($this->_config['hidden_files'], array('index.php')));
@@ -194,7 +197,7 @@ class DirectoryLister {
         // 静态设置主页路径
         $breadcrumbsArray[] = array(
             'link' => $this->_appURL,
-            'text' => 'DOUBI Soft'
+            'text' => 'Kaixinguo\'s files'
         );
 
         // Generate breadcrumbs
@@ -243,7 +246,7 @@ class DirectoryLister {
         // 检查目录是否包含索引文件
         foreach ($this->_config['index_files'] as $indexFile) {
 
-            if (file_exists($dirPath . '/' . $indexFile)) {
+            if (file_exists($this->absDir($dirPath) . '/' . $indexFile)) {
 
                 return true;
 
@@ -266,9 +269,9 @@ class DirectoryLister {
 
         // Build the path
         if ($this->_directory == '.') {
-            $path = $this->_appURL;
+            $path = $this->_appURL . $this->_baseDir;
         } else {
-            $path = $this->_appURL . $this->_directory;
+            $path = $this->_appURL . $this->absDir($this->_directory);
         }
 
         // Return the path
@@ -463,6 +466,13 @@ class DirectoryLister {
         return true;
     }
 
+    public function absDir($dir) {
+        if (empty($dir) || $dir == '.') {
+            return $this->_baseDir;
+        } else {
+            return $this->_baseDir . '/' . $dir;
+        }
+    }
 
     /**
      * Validates and returns the directory path
@@ -488,8 +498,10 @@ class DirectoryLister {
             $dir = substr($dir, 0, -1);
         }
 
+        $this->_directory = $dir;
+
         // Verify file path exists and is a directory
-        if (!file_exists($dir) || !is_dir($dir)) {
+        if (!file_exists($this->absDir($dir)) || !is_dir($this->absDir($dir))) {
             // Set the error message
             $this->setSystemMessage('danger', '<b>ERROR:</b> 文件路径不存在');
 
@@ -539,7 +551,7 @@ class DirectoryLister {
         $directoryArray = array();
 
         // Get directory contents
-        $files = scandir($directory);
+        $files = scandir($this->absDir($directory));
 
         // Read files/folders from the directory
         foreach ($files as $file) {
@@ -561,7 +573,7 @@ class DirectoryLister {
                 } else {
 
                     // Get files absolute path
-                    $realPath = realpath($relativePath);
+                    $realPath = realpath($this->absDir($relativePath));
 
                     // Determine file type by extension
                     if (is_dir($realPath)) {
@@ -614,10 +626,10 @@ class DirectoryLister {
                         // Build the file path
                         $urlPath = implode('/', array_map('rawurlencode', explode('/', $relativePath)));
 
-                        if (is_dir($relativePath)) {
+                        if (is_dir($this->absDir($relativePath))) {
                             $urlPath = '?dir=' . $urlPath;
                         } else {
-                            $urlPath = $urlPath;
+                            $urlPath = $this->absDir($urlPath);
                         }
 
                         // Add the info to the main array by larry
