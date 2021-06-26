@@ -7,7 +7,7 @@
     $lister = new DirectoryLister();
 
     // Restrict access to current directory
-    ini_set('open_basedir', getcwd());
+    //ini_set('open_basedir', getcwd());
 
     // Return file hash
     if (isset($_GET['hash'])) {

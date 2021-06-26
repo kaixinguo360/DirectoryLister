@@ -1,28 +1,22 @@
 <!DOCTYPE html>
 <?php 
-include("Parsedown.php");
-$Parsedown = new Parsedown();
 header("Content-type: text/html; charset=utf-8"); 
-$md_path_all = $lister->getListedPath();
-$md_path = explode("com", $md_path_all);
-if($md_path[1] != ""){
-	$md_path_last = substr($md_path[1], -1);
-	if($md_path_last != "/"){
-		$md_file = ".".$md_path[1]."/README.md";
-	}else{
-		$md_file = ".".$md_path[1]."README.md";
-	}
+$md_path = $lister->getListedPath();
+if ($md_path != "") {
+    $md_file = $lister->absDir($md_path) . "/README.md";
 }
-if(file_exists($md_file)){
+if (file_exists($md_file)) {
+    include("Parsedown.php");
+    $Parsedown = new Parsedown();
 	$md_text = file_get_contents($md_file);
-	$md_text = "<div class=\"container readme-background\"><div class=\"readme\">".$Parsedown -> text($md_text)."</div></div>";
-}else{
+	$md_text = "<div class=\"container readme-background\"><div class=\"readme\">" . $Parsedown->text($md_text) . "</div></div>";
+} else {
 	$md_text = "";
 }
 ?>
 <html>
     <head>
-        <title>DOUBI Soft <?php echo $md_path_all; ?></title>
+        <title><?php echo $lister->title . ($md_path == '.' ? '' : (' / ' . str_replace('/', ' / ', $md_path))); ?></title>
         <link rel="shortcut icon" href="/resources/themes/bootstrap/img/folder.png">
         <link rel="stylesheet" href="/resources/themes/bootstrap/css/bootstrap.min.css">
         <link rel="stylesheet" href="/resources/themes/bootstrap/css/font-awesome.min.css">
@@ -75,7 +69,7 @@ if(file_exists($md_file)){
 		</div>
 		</div>
 		<div id="page-content" class="container">
-            <?php file_exists('header.php') ? include('header.php') : include($lister->getThemePath(true) . "/default_header.php"); ?>
+            <?php file_exists($lister->getThemePath(true) . '/header.php') ? include($lister->getThemePath(true) . '/header.php') : include($lister->getThemePath(true) . "/default_header.php"); ?>
             <?php if($lister->getSystemMessages()): ?>
                 <?php foreach ($lister->getSystemMessages() as $message): ?>
                     <div class="alert alert-<?php echo $message['type']; ?>">
@@ -130,7 +124,7 @@ if(file_exists($md_file)){
 		}
 		?>
 		<!-- 说明 -->
-        <?php file_exists('footer.php') ? include('footer.php') : include($lister->getThemePath(true) . "/default_footer.php"); ?>
+        <?php file_exists($lister->getThemePath(true) . '/footer.php') ? include($lister->getThemePath(true) . '/footer.php') : include($lister->getThemePath(true) . "/default_footer.php"); ?>
         <!-- div id="file-info-modal" class="modal fade">
             <div class="modal-dialog">
                 <div class="modal-content">

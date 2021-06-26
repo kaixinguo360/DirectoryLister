@@ -19,6 +19,7 @@ class DirectoryLister {
     const VERSION = '2.6.1';
 
     // Reserve some variables
+    public $title             = null;
     protected $_themeName     = null;
     protected $_baseDir       = null;
     protected $_directory     = null;
@@ -46,7 +47,11 @@ class DirectoryLister {
         $this->_appURL = $this->_getAppUrl();
 
         // 加载配置文件
-        $configFile = $this->_appDir . '/config.php';
+        if (file_exists($this->_appDir . '/config.php')) {
+            $configFile = $this->_appDir . '/config.php';
+        } else {
+            $configFile = $this->_appDir . '/default_config.php';
+        }
 
         // 将配置数组设置为全局变量
         if (file_exists($configFile)) {
@@ -60,6 +65,9 @@ class DirectoryLister {
 
         // 设置主题名称
         $this->_themeName = $this->_config['theme_name'];
+
+        // 设置应用标题
+        $this->title = $this->_config['title'];
 
         // 设置数据路径
         $this->_baseDir = isset($this->_config['base_dir']) ? $this->_config['base_dir'] : '.';
@@ -197,7 +205,7 @@ class DirectoryLister {
         // 静态设置主页路径
         $breadcrumbsArray[] = array(
             'link' => $this->_appURL,
-            'text' => 'Kaixinguo\'s files'
+            'text' => $this->title
         );
 
         // Generate breadcrumbs
@@ -267,15 +275,8 @@ class DirectoryLister {
      */
     public function getListedPath() {
 
-        // Build the path
-        if ($this->_directory == '.') {
-            $path = $this->_appURL . $this->_baseDir;
-        } else {
-            $path = $this->_appURL . $this->absDir($this->_directory);
-        }
-
         // Return the path
-        return $path;
+        return $this->_directory;
     }
 
 

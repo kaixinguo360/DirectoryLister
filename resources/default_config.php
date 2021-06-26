@@ -8,8 +8,8 @@ return array(
     'list_sort_order'           => 'natcasesort',
     'theme_name'                => 'bootstrap',
     'external_links_new_window' => true,
-    'title'                     => "Kaixinguo's files",
-    'base_dir'                  => './Shared',
+    'title'                     => "Directory Lister",
+    'base_dir'                  => '.',
 
     // 隐藏文件
     'hidden_files' => array(
