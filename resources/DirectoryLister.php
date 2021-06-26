@@ -23,10 +23,13 @@ class DirectoryLister {
     protected $_themeName     = null;
     protected $_baseDir       = null;
     protected $_directory     = null;
+    protected $_file          = null;
+    protected $_onlyRender    = null;
     protected $_appDir        = null;
     protected $_appURL        = null;
     protected $_config        = null;
     protected $_fileTypes     = null;
+    protected $_fileRenders   = null;
     protected $_systemMessage = null;
 
 
@@ -62,6 +65,9 @@ class DirectoryLister {
 
         // 将文件类型数组设置为全局变量
         $this->_fileTypes = require_once($this->_appDir . '/fileTypes.php');
+
+        // 将文件渲染器数组设置为全局变量
+        $this->_fileRenders = require_once($this->_appDir . '/fileRenders.php');
 
         // 设置主题名称
         $this->_themeName = $this->_config['theme_name'];
@@ -100,7 +106,7 @@ class DirectoryLister {
         if ($this->_config['zip_dirs']) {
 
             // Cleanup directory path
-            $directory = $this->setDirectoryPath($directory);
+            $directory = $this->setDir($directory);
 
             if ($directory != '.' && $this->_isHidden($directory)) {
                 echo "Access denied.";
@@ -119,7 +125,7 @@ class DirectoryLister {
             header("Content-Disposition: attachment; filename=\"$filename_no_ext.zip\"");
 
             //change directory so the zip file doesnt have a tree structure in it.
-            chdir($this->absDir($directory));
+            chdir($this->absPath($directory));
 
             // TODO: Probably we have to parse exclude list more carefully
             $exclude_list = implode(' ', array_merge($this->_config['hidden_files'], array('index.php')));
@@ -167,10 +173,13 @@ class DirectoryLister {
      * @return array Array of directory being listed
      * @access public
      */
-    public function listDirectory($directory) {
+    public function listDirectory($directory, $file = null) {
+
+        $directory = rawurldecode($directory);
+        $file = rawurldecode($file);
 
         // Set directory
-        $directory = $this->setDirectoryPath($directory);
+        $directory = $this->setDir($directory);
 
         // Set directory variable if left blank
         if ($directory === null) {
@@ -185,6 +194,8 @@ class DirectoryLister {
             return [];
         }
 
+        // Set file
+        $file = $this->setFile($file);
 
         // Get the directory array
         $directoryArray = $this->_readDirectory($directory);
@@ -252,27 +263,53 @@ class DirectoryLister {
 
 
     /**
-     * Determines if a directory contains an index file
+     * Determines if a directory contains an index file and return it
      *
      * @param string $dirPath Path to directory to be checked for an index
-     * @return boolean Returns true if directory contains a valid index file, false if not
+     * @return string Returns name of index file
      * @access public
      */
-    public function containsIndex($dirPath) {
+    public function findIndexFile($dirPath) {
 
         // 检查目录是否包含索引文件
         foreach ($this->_config['index_files'] as $indexFile) {
 
-            if (file_exists($this->absDir($dirPath) . '/' . $indexFile)) {
+            if (file_exists($this->absPath($dirPath) . '/' . $indexFile)) {
 
-                return true;
+                return $indexFile;
 
             }
 
         }
 
-        return false;
+        return null;
 
+    }
+
+
+    /**
+     * Get URL
+     *
+     * @return string URL
+     * @access public
+     */
+    public function getURL($dir, $file) {
+        if (empty($file)) {
+            return '?dir=' . rawurlencode($dir);
+        } else {
+            return '?dir=' . rawurlencode($dir) . '&file=' . rawurlencode($file);
+        }
+    }
+
+
+    /**
+     * Get App URL
+     *
+     * @return string App URL
+     * @access public
+     */
+    public function getAppURL() {
+        return $this->_appURL;
     }
 
 
@@ -282,10 +319,23 @@ class DirectoryLister {
      * @return string Path of the listed directory
      * @access public
      */
-    public function getListedPath() {
+    public function getDir() {
 
         // Return the path
         return $this->_directory;
+    }
+
+
+    /**
+     * Get path of the displayed file
+     *
+     * @return string Path of the displayed file
+     * @access public
+     */
+    public function getFile() {
+
+        // Return the path
+        return $this->_file;
     }
 
 
@@ -445,23 +495,34 @@ class DirectoryLister {
      * @return string Sanitizd path to directory
      * @access public
      */
-    public function setDirectoryPath($path = null) {
+    public function setDir($path = null) {
 
         // Set the directory global variable
-        $this->_directory = $this->_setDirectoryPath($path);
+        $this->_directory = $this->_setDir($path);
 
         return $this->_directory;
 
     }
 
+
     /**
-     * Get directory path variable
+     * Set file path variable
      *
-     * @return string Sanitizd path to directory
+     * @param string $path Path to file
+     * @return string Sanitizd path to file
      * @access public
      */
-    public function getDirectoryPath() {
-        return $this->_directory;
+    public function setFile($path = null) {
+
+        if (empty($path)) {
+            $this->_onlyRender = false;
+            $this->_file = $this->findIndexFile($this->getDir());
+        } else {
+            $this->_onlyRender = true;
+            $this->_file = $path;
+        }
+
+        return $this->_file;
     }
 
 
@@ -489,11 +550,79 @@ class DirectoryLister {
         return true;
     }
 
-    public function absDir($dir) {
-        if (empty($dir) || $dir == '.') {
-            return $this->_baseDir;
+
+    /**
+     * Render file
+     *
+     * @param string $dir
+     * @param string $file
+     * @return string bsolute path of dir or file
+     * @access public
+     */
+    public function renderFile() {
+        // Get files absolute path
+        $dir = $this->getDir();
+        $file = $this->getFile();
+        $path = $this->absPath($dir, $file);
+
+        if (empty($file)) {
+            return;
+        }
+
+        // Is Directory
+        if (is_dir($path)) {
+            $dir = $dir . '/' . $file;
+            $file = $this->findIndexFile($dir);
+            $path = $this->absPath($dir, $file);
+
+            if(substr($dir, 0, 2) == './') {
+                $dir = substr($dir, 2);
+            }
+
+            header('Location:' . $this->getURL($dir, $file));
+            return;
+        }
+
+        // Get file extension
+        $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+
+        if (isset($this->_fileRenders[$ext])) {
+            $render = $this->_fileRenders[$ext];
         } else {
-            return $this->_baseDir . '/' . $dir;
+            $render = $this->_fileRenders['blank'];
+        }
+
+        if (!empty($render)) {
+            if (file_exists($path)) {
+                $lister = $this;
+                require($this->_appDir . '/renders/' . $render);
+            } else {
+                echo "<div style='margin: 42px auto; width: fit-content; font-size: 20px;'>404 not found</div>";
+            }
+        } else {
+            echo "<div style='margin: 42px auto; width: fit-content; font-size: 20px;'>Unsupported File</div>";
+        }
+    }
+
+
+    /**
+     * Get absolute path of dir or file
+     *
+     * @param string $dir
+     * @param string $file
+     * @return string bsolute path of dir or file
+     * @access public
+     */
+    public function absPath($dir, $file = null) {
+        if (empty($dir) || $dir == '.') {
+            $path = $this->_baseDir;
+        } else {
+            $path = $this->_baseDir . '/' . $dir;
+        }
+        if (isset($file)) {
+            return $path . '/' . $file;
+        } else {
+            return $path;
         }
     }
 
@@ -504,7 +633,7 @@ class DirectoryLister {
      * @return string Directory path to be listed
      * @access protected
      */
-    protected function _setDirectoryPath($dir) {
+    protected function _setDir($dir) {
 
         // Check for an empty variable
         if (empty($dir) || $dir == '.') {
@@ -524,7 +653,7 @@ class DirectoryLister {
         $this->_directory = $dir;
 
         // Verify file path exists and is a directory
-        if (!file_exists($this->absDir($dir)) || !is_dir($this->absDir($dir))) {
+        if (!file_exists($this->absPath($dir)) || !is_dir($this->absPath($dir))) {
             // Set the error message
             $this->setSystemMessage('danger', '<b>ERROR:</b> 文件路径不存在');
 
@@ -574,7 +703,7 @@ class DirectoryLister {
         $directoryArray = array();
 
         // Get directory contents
-        $files = scandir($this->absDir($directory));
+        $files = scandir($this->absPath($directory));
 
         // Read files/folders from the directory
         foreach ($files as $file) {
@@ -596,7 +725,7 @@ class DirectoryLister {
                 } else {
 
                     // Get files absolute path
-                    $realPath = realpath($this->absDir($relativePath));
+                    $realPath = realpath($this->absPath($relativePath));
 
                     // Determine file type by extension
                     if (is_dir($realPath)) {
@@ -610,6 +739,12 @@ class DirectoryLister {
                             $iconClass = $this->_fileTypes[$fileExt];
                         } else {
                             $iconClass = $this->_fileTypes['blank'];
+                        }
+
+                        if (isset($this->_fileRenders[$fileExt])) {
+                            $render = $this->_fileRenders[$fileExt];
+                        } else {
+                            $render = $this->_fileRenders['blank'];
                         }
 
                         $sort = 2;
@@ -627,13 +762,13 @@ class DirectoryLister {
                         $directoryPath = implode('/', $pathArray);
 
                         if (!empty($directoryPath)) {
-                            $directoryPath = '?dir=' . rawurlencode($directoryPath);
+                            $urlPath = '?dir=' . rawurlencode($directoryPath);
                         }
 
                         // Add file info to the array
                         $directoryArray['..'] = array(
-                            'file_path'  => $this->_appURL . $directoryPath,
-                            'url_path'   => $this->_appURL . $directoryPath,
+                            'file_path'  => $directoryPath,
+                            'url_path'   => $this->_appURL . $urlPath,
                             'file_size'  => '-',
                             'mod_time'   => date('Y-m-d H:i:s', filemtime($realPath)),
                             'icon_class' => 'fa-level-up',
@@ -649,10 +784,13 @@ class DirectoryLister {
                         // Build the file path
                         $urlPath = implode('/', array_map('rawurlencode', explode('/', $relativePath)));
 
-                        if (is_dir($this->absDir($relativePath))) {
-                            $urlPath = '?dir=' . $urlPath;
+                        if (is_dir($this->absPath($relativePath))) {
+                            $urlPath = '?dir=' . rawurlencode($urlPath);
+                            $indexFile = $this->findIndexFile($relativePath);
+                            $renderable = !empty($indexFile);
                         } else {
-                            $urlPath = $this->absDir($urlPath);
+                            $urlPath = $this->absPath($urlPath);
+                            $renderable = !empty($render);
                         }
 
                         // Add the info to the main array by larry
@@ -665,6 +803,7 @@ class DirectoryLister {
                             'file_size'  => is_dir($realPath) ? '-' : $this->getFileSize($realPath),
                             'mod_time'   => date('Y-m-d H:i:s', filemtime($realPath)),
                             'icon_class' => $iconClass,
+                            'renderable' => $renderable,
                             'sort'       => $sort
                         );
                     }
@@ -793,7 +932,7 @@ class DirectoryLister {
      * @access protected
      */
     protected function _isAuthorized($filePath) {
-        $path = $this->absDir($filePath) . '/.password';
+        $path = $this->absPath($filePath) . '/.password';
 
         // 获取目标密码
         if (file_exists($path)) {

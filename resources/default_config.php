@@ -7,7 +7,7 @@ return array(
     'list_folders_first'        => true,
     'list_sort_order'           => 'natcasesort',
     'theme_name'                => 'bootstrap',
-    'external_links_new_window' => true,
+    'external_links_new_window' => false,
     'title'                     => "Directory Lister",
     'base_dir'                  => '.',
 
@@ -20,20 +20,13 @@ return array(
 		'ErrorFiles',
 		'ErrorFiles/*',
         'analytics.inc',
-        'header.php',
-        'footer.php',
-		'*/README.*',
-		'README.*'
     ),
 
     // Files that, if present in a directory, make the directory
     // a direct link rather than a browse link.
     'index_files' => array(
-        'index.htm',
-        'index.html',
-        'index.php',
-		'*/README.*',
-		'README.*'
+		'README.md',
+		'README.html'
     ),
 
     // 文件 hash 阈值

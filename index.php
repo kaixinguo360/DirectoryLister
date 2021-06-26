@@ -1,5 +1,8 @@
 <?php
 
+    // Set Log Level
+    error_reporting(E_ALL ^ E_NOTICE);
+
     // Include the DirectoryLister class
     require_once('resources/DirectoryLister.php');
 
@@ -29,9 +32,9 @@
 
         // Initialize the directory array
         if (isset($_GET['dir'])) {
-            $dirArray = $lister->listDirectory($_GET['dir']);
+            $dirArray = $lister->listDirectory($_GET['dir'], $_GET['file']);
         } else {
-            $dirArray = $lister->listDirectory('.');
+            $dirArray = $lister->listDirectory('.', $_GET['file']);
         }
 
         // Define theme path
