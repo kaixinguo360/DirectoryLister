@@ -177,6 +177,15 @@ class DirectoryLister {
             $directory = $this->_directory;
         }
 
+        if (!$this->_isAuthorized($directory)) {
+            // Set the auth status
+            $this->_authStatus = false;
+
+            // Return empty array
+            return [];
+        }
+
+
         // Get the directory array
         $directoryArray = $this->_readDirectory($directory);
 
@@ -325,6 +334,19 @@ class DirectoryLister {
         return $themePath;
     }
 
+    /**
+     * Get auth status
+     *
+     * @return bool auth status
+     * @access public
+     */
+    public function getAuthStatus() {
+        if (!isset($this->_authStatus)) {
+            return true;
+        } else {
+            return $this->_authStatus;
+        }
+    }
 
     /**
      * Get an array of error messages or false when empty
@@ -762,6 +784,44 @@ class DirectoryLister {
 
     }
 
+
+    /**
+     * Determines if a directory is allowed to access
+     *
+     * @param string $filePath Path to file to be checked
+     * @return boolean Returns true if file is allowed
+     * @access protected
+     */
+    protected function _isAuthorized($filePath) {
+        $path = $this->absDir($filePath) . '/.password';
+
+        // 获取目标密码
+        if (file_exists($path)) {
+            $password = trim(file_get_contents($path));
+        }
+        if (empty($password)) {
+            return true;
+        }
+
+        // 获取输入密码
+        $id = "p:" . md5($filePath);
+        if (isset($_POST['password'])) {
+            $input = $_POST['password'];
+        } else if (isset($_COOKIE[$id])) {
+            $input = $_COOKIE[$id];
+        }
+
+        // 效验密码
+        if ($input == $password) {
+            setcookie($id, $input);
+            return true;
+        } else {
+            setcookie($id, "", time()-3600);
+            return false;
+        }
+
+        return false;
+    }
 
     /**
      * Determines if a file is specified as hidden
