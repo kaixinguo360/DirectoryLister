@@ -81,3 +81,101 @@ function to_utf8($raw) {
     }
 }
 
+
+/**
+ * 合并多个路径
+ */
+function concatPath(...$args) {
+    foreach ($args as $arg) {
+        $arg = trim($arg, '\\');
+        if (empty($arg) || $arg == '.') {
+            continue;
+        } else {
+            if (empty($path)) {
+                $path = $arg;
+            } else {
+                $path .= '/' . $arg;
+            }
+        }
+    }
+    return $path;
+}
+
+
+/**
+ * 查找并返回指定文件的附加文件 (如某个剧集的字幕/弹幕等)
+ * @param string $path 指定文件的路径
+ * @param string $exts 附加文件的扩展名, 逗号分隔
+ * @param string $dirs 附加文件搜索路径, 逗号分隔, 默认为仅搜索指定文件的同级目录
+ * @param string $fuzzySearch 是否启用模糊搜索, 默认开启, 将文件名含有的数字识别为序列号并进行模糊匹配
+ * @return string 附加文件的路径, 无匹配项时返回空
+ */
+function find_additional_resource($path, $exts, $dirs = '.', $fuzzySearch = true) {
+    $info = pathinfo($path);
+
+    $filePath = $path;
+    $fileDir = $info['dirname'];
+    $fileExt = $info['extension'];
+    $fileFullName = $info['basename'];
+    $fileName = $info['filename'];
+
+    $dirs = explode(',', $dirs);
+    $exts = explode(',', $exts);
+
+    foreach ($dirs as $dir) {
+        $dir = trim($dir);
+        $resourcePath = concatPath($fileDir, $dir);
+        if (!file_exists($resourcePath)) {
+            continue;
+        }
+        foreach ($exts as $ext) {
+            $ext = ltrim(trim($ext), '.');
+            if (file_exists($fullPath = concatPath($resourcePath, $fileName . '.' . $ext))) {
+                return $fullPath;
+            } else if (file_exists($fullPath = concatPath($resourcePath, $fileFullName . '.' . $ext))) {
+                return $fullPath;
+            }
+        }
+    }
+
+    if ($fuzzySearch) {
+        $fileList = scandir($fileDir);
+        $fileSriNo = 0;
+        foreach ($fileList as $file) {
+            if (pathinfo($file, PATHINFO_EXTENSION) == $fileExt) {
+                $fileSriNo++;
+            }
+            if (pathinfo($file, PATHINFO_BASENAME) == $fileFullName) {
+                break;
+            }
+        }
+        foreach ($dirs as $dir) {
+            $dir = trim($dir);
+            $resourcePath = concatPath($fileDir, $dir);
+            if (!file_exists($resourcePath)) {
+                continue;
+            }
+            foreach ($exts as $ext) {
+                $ext = ltrim(trim($ext), '.');
+                $results = glob($resourcePath . '/*' . $fileSriNo . '*.' . $ext);
+                $resultCount = count($results);
+                if ($resultCount == 0) {
+                    break;
+                }
+                if ($resultCount > 1) {
+                    foreach ($results as $result) {
+                        $name = pathinfo($file, PATHINFO_BASENAME);
+                        $resultIndex = preg_replace('/\D/', '', $name) + 0;
+                        if ($resultIndex == $fileSriNo) {
+                            return $result;
+                        }
+                    }
+                }
+                return end($results);
+            }
+        }
+    }
+
+    return null;
+}
+
