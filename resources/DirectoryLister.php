@@ -200,6 +200,8 @@ class DirectoryLister {
         // Get the directory array
         $directoryArray = $this->_readDirectory($directory);
 
+        $this->_dirArray = $directoryArray;
+
         // Return the array
         return $directoryArray;
     }
@@ -310,6 +312,17 @@ class DirectoryLister {
      */
     public function getAppURL() {
         return $this->_appURL;
+    }
+
+
+    /**
+     * Get Listed Dirs
+     *
+     * @return Array Listed Dirs
+     * @access public
+     */
+    public function getDirArray() {
+        return $this->_dirArray;
     }
 
 
@@ -564,6 +577,7 @@ class DirectoryLister {
         $dir = $this->getDir();
         $file = $this->getFile();
         $path = $this->absPath($dir, $file);
+        $dirArray = $this->getDirArray();
 
         if (empty($file)) {
             return;
@@ -708,109 +722,106 @@ class DirectoryLister {
         // Read files/folders from the directory
         foreach ($files as $file) {
 
-            if ($file != '.') {
-
-                // Get files relative path
-                $relativePath = $directory . '/' . $file;
-
-                if (substr($relativePath, 0, 2) == './') {
-                    $relativePath = substr($relativePath, 2);
-                }
-
-                // Don't check parent dir if we're in the root dir
-                if ($this->_directory == '.' && $file == '..'){
-
-                    continue;
-
-                } else {
-
-                    // Get files absolute path
-                    $realPath = realpath($this->absPath($relativePath));
-
-                    // Determine file type by extension
-                    if (is_dir($realPath)) {
-                        $iconClass = 'fa-folder';
-                        $sort = 1;
-                    } else {
-                        // Get file extension
-                        $fileExt = strtolower(pathinfo($realPath, PATHINFO_EXTENSION));
-
-                        if (isset($this->_fileTypes[$fileExt])) {
-                            $iconClass = $this->_fileTypes[$fileExt];
-                        } else {
-                            $iconClass = $this->_fileTypes['blank'];
-                        }
-
-                        if (isset($this->_fileRenders[$fileExt])) {
-                            $render = $this->_fileRenders[$fileExt];
-                        } else {
-                            $render = $this->_fileRenders['blank'];
-                        }
-
-                        $sort = 2;
-                    }
-
-                }
-
-                if ($file == '..') {
-
-                    if ($this->_directory != '.') {
-                        // Get parent directory path
-                        $pathArray = explode('/', $relativePath);
-                        unset($pathArray[count($pathArray)-1]);
-                        unset($pathArray[count($pathArray)-1]);
-                        $directoryPath = implode('/', $pathArray);
-
-                        if (!empty($directoryPath)) {
-                            $urlPath = '?dir=' . rawurlencode($directoryPath);
-                        }
-
-                        // Add file info to the array
-                        $directoryArray['..'] = array(
-                            'file_path'  => $directoryPath,
-                            'url_path'   => $this->_appURL . $urlPath,
-                            'file_size'  => '-',
-                            'mod_time'   => date('Y-m-d H:i:s', filemtime($realPath)),
-                            'icon_class' => 'fa-level-up',
-                            'sort'       => 0
-                        );
-                    }
-
-                } elseif (!$this->_isHidden($relativePath)) {
-
-                    // Add all non-hidden files to the array
-                    if ($this->_directory != '.' || $file != 'index.php') {
-
-                        // Build the file path
-                        $urlPath = implode('/', array_map('rawurlencode', explode('/', $relativePath)));
-
-                        if (is_dir($this->absPath($relativePath))) {
-                            $urlPath = '?dir=' . rawurlencode($urlPath);
-                            $indexFile = $this->findIndexFile($relativePath);
-                            $renderable = !empty($indexFile);
-                        } else {
-                            $urlPath = $this->absPath($urlPath);
-                            $renderable = !empty($render);
-                        }
-
-                        // Add the info to the main array by larry
-                        preg_match('/\/([^\/]*)$/', $relativePath, $matches);
-                        $pathname = isset($matches[1]) ? $matches[1] : $relativePath;
-                        //$directoryArray[pathinfo($relativePath, PATHINFO_BASENAME)] = array(
-                        $directoryArray[$pathname] = array(
-                            'file_path'  => $relativePath,
-                            'url_path'   => $urlPath,
-                            'file_size'  => is_dir($realPath) ? '-' : $this->getFileSize($realPath),
-                            'mod_time'   => date('Y-m-d H:i:s', filemtime($realPath)),
-                            'icon_class' => $iconClass,
-                            'renderable' => $renderable,
-                            'sort'       => $sort
-                        );
-                    }
-
-                }
+            if ($file == '.') {
+                continue;
             }
 
+            // Don't check parent dir if we're in the root dir
+            if ($this->_directory == '.' && $file == '..'){
+                continue;
+            }
+
+            if ($this->_directory == '.' && $file == 'index.php') {
+                continue;
+            }
+
+            // Get files relative path
+            $relativePath = $directory . '/' . $file;
+            if (substr($relativePath, 0, 2) == './') {
+                $relativePath = substr($relativePath, 2);
+            }
+
+            // Get files absolute path
+            $realPath = realpath($this->absPath($relativePath));
+
+            // Determine file type by extension
+            if (is_dir($realPath)) {
+                $iconClass = 'fa-folder';
+                $sort = 1;
+            } else {
+                // Get file extension
+                $fileExt = strtolower(pathinfo($realPath, PATHINFO_EXTENSION));
+
+                if (isset($this->_fileTypes[$fileExt])) {
+                    $iconClass = $this->_fileTypes[$fileExt];
+                } else {
+                    $iconClass = $this->_fileTypes['blank'];
+                }
+
+                if (isset($this->_fileRenders[$fileExt])) {
+                    $render = $this->_fileRenders[$fileExt];
+                } else {
+                    $render = $this->_fileRenders['blank'];
+                }
+
+                $sort = 2;
+            }
+
+            if ($file == '..') {
+
+                // Get parent directory path
+                $pathArray = explode('/', $relativePath);
+                unset($pathArray[count($pathArray)-1]);
+                unset($pathArray[count($pathArray)-1]);
+                $directoryPath = implode('/', $pathArray);
+
+                if (!empty($directoryPath)) {
+                    $urlPath = '?dir=' . rawurlencode($directoryPath);
+                }
+
+                // Add file info to the array
+                $directoryArray['..'] = array(
+                    'file_path'  => $directoryPath,
+                    'url_path'   => $this->_appURL . $urlPath,
+                    'file_size'  => '-',
+                    'mod_time'   => date('Y-m-d H:i:s', filemtime($realPath)),
+                    'icon_class' => 'fa-level-up',
+                    'sort'       => 0
+                );
+
+            } elseif (!$this->_isHidden($relativePath)) {
+
+                // Add all non-hidden files to the array
+                if ($this->_directory != '.' || $file != 'index.php') {
+
+                    // Build the file path
+                    $urlPath = implode('/', array_map('rawurlencode', explode('/', $relativePath)));
+
+                    if (is_dir($this->absPath($relativePath))) {
+                        $urlPath = '?dir=' . rawurlencode($urlPath);
+                        $indexFile = $this->findIndexFile($relativePath);
+                        $renderable = !empty($indexFile);
+                    } else {
+                        $urlPath = $this->absPath($urlPath);
+                        $renderable = !empty($render);
+                    }
+
+                    // Add the info to the main array by larry
+                    preg_match('/\/([^\/]*)$/', $relativePath, $matches);
+                    $pathname = isset($matches[1]) ? $matches[1] : $relativePath;
+                    //$directoryArray[pathinfo($relativePath, PATHINFO_BASENAME)] = array(
+                    $directoryArray[$pathname] = array(
+                        'file_path'  => $relativePath,
+                        'url_path'   => $urlPath,
+                        'file_size'  => is_dir($realPath) ? '-' : $this->getFileSize($realPath),
+                        'mod_time'   => date('Y-m-d H:i:s', filemtime($realPath)),
+                        'icon_class' => $iconClass,
+                        'renderable' => $renderable,
+                        'sort'       => $sort
+                    );
+                }
+
+            }
         }
 
         // Sort the array

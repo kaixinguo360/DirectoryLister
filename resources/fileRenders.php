@@ -2,6 +2,16 @@
 
 return array(
 
+    // Image
+    'bmp'   => 'Image.php',
+    'gif'   => 'Image.php',
+    'jpg'   => 'Image.php',
+    'jpeg'  => 'Image.php',
+    'png'   => 'Image.php',
+    'psd'   => 'Image.php',
+    'tga'   => 'Image.php',
+    'tif'   => 'Image.php',
+
     // MarkDown
     'md'    => 'MarkDown.php',
 

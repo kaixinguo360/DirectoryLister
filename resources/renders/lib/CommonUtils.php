@@ -179,3 +179,15 @@ function find_additional_resource($path, $exts, $dirs = '.', $fuzzySearch = true
     return null;
 }
 
+
+function checkExtension($file, $exts) {
+    $ext = pathinfo($file, PATHINFO_EXTENSION);
+    $exts = explode(',', $exts);
+    foreach ($exts as $e) {
+        if ($ext == trim($e)) {
+            return true;
+        }
+    }
+    return false;
+}
+
