@@ -34,7 +34,6 @@ $next = ($end >= ($size - 1)) ? null : $files[$end];
     justify-content: center;
     margin: auto;
     align-items: center;
-    overflow: hidden;
 }
 #display {
     width: 100%;
@@ -77,6 +76,8 @@ $next = ($end >= ($size - 1)) ? null : $files[$end];
     z-index: 10;
 }
 </style>
+
+<script src="/resources/renders/js/lightense.min.js"></script>
 
 <div id="container" class="container">
 
@@ -130,9 +131,7 @@ $next = ($end >= ($size - 1)) ? null : $files[$end];
         <a style="left: 0" class="in-button" onclick="changeImage(cur - 1)">
             <i style="background: unset" class="overlay fa fa-angle-left fa-4x"></i>
         </a>
-        <a id="display-link" href="<?php echo $lister->absPath($dir) . '/' . $file; ?>">
-            <img id="display" src="<?php echo $lister->absPath($dir) . '/' . $file; ?>" />
-        </a>
+		<img id="display" src="<?php echo $lister->absPath($dir) . '/' . $file; ?>" />
         <a style="right: 0" class="in-button" onclick="changeImage(cur + 1)">
             <i style="background: unset" class="overlay fa fa-angle-right fa-4x"></i>
         </a>
@@ -161,5 +160,25 @@ function changeImage(id) {
     $('#display-link').attr('href', absPath + name);
     $('#info').html(`${id + 1}/${size - 1}`);
 }
+
+const preventMove = (e) => e.preventDefault();
+
+Lightense('#display', {
+    time: 300,
+    padding: 0,
+    offset: 0,
+    keyboard: false,
+    cubicBezier: 'cubic-bezier(.2, 0, .1, 1)',
+    background: 'rgba(255, 255, 255, .98)',
+    zIndex: 2147483647,
+    beforeShow: (config) => {
+        document.body.addEventListener('touchmove', preventMove, { passive: false });
+        document.addEventListener('onmousewheel', preventMove, { passive: false });
+    },
+    afterHide: (config) => {
+        document.body.removeEventListener('touchmove', preventMove);
+        document.removeEventListener('onmousewheel', preventMove);
+    },
+});
 </script>
 
