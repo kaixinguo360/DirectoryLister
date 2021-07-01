@@ -1,7 +1,5 @@
 <?php
 
-require_once('lib/CommonUtils.php');
-
 $files = [];
 $exts = 'bmp, gif, jpg, jpeg, png, psd, tga, tif';
 $i = 0;
@@ -77,7 +75,7 @@ $next = ($end >= ($size - 1)) ? null : $files[$end];
 }
 </style>
 
-<script src="/resources/renders/js/lightense.min.js"></script>
+<script src="/resources/renders/Image/js/lightense.min.js"></script>
 
 <div id="container" class="container">
 

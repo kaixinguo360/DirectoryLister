@@ -31,6 +31,8 @@
                         <?php if ($breadcrumb != end($breadcrumbs)): ?>
                                 <a href="<?php echo $breadcrumb['link']; ?>"><?php echo $breadcrumb['text']; ?></a>
                                 <span class="divider">/</span>
+                        <?php elseif (!empty($file)): ?>
+                            <a href="<?php echo $breadcrumb['link']; ?>"><?php echo $breadcrumb['text']; ?></a>
                         <?php else: ?>
                             <?php echo $breadcrumb['text']; ?>
                         <?php endif; ?>

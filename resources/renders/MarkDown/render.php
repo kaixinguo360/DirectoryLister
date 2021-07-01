@@ -1,5 +1,4 @@
 <?php
-require_once('lib/CommonUtils.php');
 require_once("lib/Parsedown.php");
 
 $Parsedown = new Parsedown();

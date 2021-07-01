@@ -1,7 +1,5 @@
 <?php
 
-require_once('lib/CommonUtils.php');
-
 $size = filesize($path);
 if ($size > 10 * 1024 * 1024 && !$_GET['force']) {
     $error = "Unsupported file size: " . $lister->getFileSize($path);

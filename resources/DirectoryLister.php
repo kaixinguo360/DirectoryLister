@@ -49,25 +49,26 @@ class DirectoryLister {
         // 构建应用程序URL
         $this->_appURL = $this->_getAppUrl();
 
-        // 加载配置文件
-        if (file_exists($this->_appDir . '/config.php')) {
-            $configFile = $this->_appDir . '/config.php';
+        // 加载基本配置
+        if (file_exists($this->_appDir . '/config/config.php')) {
+            $this->_config = require_once($this->_appDir . '/config/config.php');
         } else {
-            $configFile = $this->_appDir . '/default_config.php';
+            $this->_config = require_once($this->_appDir . '/config/config.default.php');
         }
 
-        // 将配置数组设置为全局变量
-        if (file_exists($configFile)) {
-            $this->_config = require_once($configFile);
+        // 加载文件类型配置
+        if (file_exists($this->_appDir . '/config/fileTypes.php')) {
+            $this->_fileTypes = require_once($this->_appDir . '/config/fileTypes.php');
         } else {
-            die('ERROR: Missing application config file at ' . $configFile);
+            $this->_fileTypes = require_once($this->_appDir . '/config/fileTypes.default.php');
         }
 
-        // 将文件类型数组设置为全局变量
-        $this->_fileTypes = require_once($this->_appDir . '/fileTypes.php');
-
-        // 将文件渲染器数组设置为全局变量
-        $this->_fileRenders = require_once($this->_appDir . '/fileRenders.php');
+        // 加载文件渲染器配置
+        if (file_exists($this->_appDir . '/config/fileRenders.php')) {
+            $this->_fileRenders = require_once($this->_appDir . '/config/fileRenders.php');
+        } else {
+            $this->_fileRenders = require_once($this->_appDir . '/config/fileRenders.default.php');
+        }
 
         // 设置主题名称
         $this->_themeName = $this->_config['theme_name'];
@@ -609,7 +610,8 @@ class DirectoryLister {
         if (!empty($render)) {
             if (file_exists($path)) {
                 $lister = $this;
-                require($this->_appDir . '/renders/' . $render);
+                require_once($this->_appDir . '/lib/RenderUtils.php');
+                require($this->_appDir . '/renders/' . $render . '/render.php');
             } else {
                 echo "<div style='margin: 42px auto; width: fit-content; font-size: 20px;'>404 not found</div>";
             }
