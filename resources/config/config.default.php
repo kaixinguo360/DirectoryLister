@@ -5,7 +5,7 @@ return array(
     // 基本设置
     'hide_dot_files'            => true,
     'list_folders_first'        => true,
-    'list_sort_order'           => 'natcasesort',
+    'list_sort'                 => 'name asc',
     'theme_name'                => 'bootstrap',
     'external_links_new_window' => false,
     'title'                     => "Directory Lister",
@@ -13,20 +13,24 @@ return array(
 
     // 隐藏文件
     'hidden_files' => array(
-        '.ht*',
-        '*/.ht*',
         'resources',
         'resources/*',
 		'ErrorFiles',
 		'ErrorFiles/*',
         'analytics.inc',
+        '.ht*', '*/.ht*',
+        '.git', '*/.git',
+        '.rsync', '*/.rsync',
+        '.nomedia', '*/.nomedia',
+        '.password', '*/.password',
+        '.sort', '*/.sort',
     ),
 
     // Files that, if present in a directory, make the directory
     // a direct link rather than a browse link.
     'index_files' => array(
-		'README.md',
-		'README.html'
+        'README.md',
+        'README.html'
     ),
 
     // 文件 hash 阈值

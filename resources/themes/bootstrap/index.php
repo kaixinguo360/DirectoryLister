@@ -95,14 +95,14 @@
                                 <a href="<?php echo $fileInfo['url_path']; ?>" class="clearfix" data-name="<?php echo $name; ?>">
                                     <div class="row">
                                         <span class="file-name col-md-6 col-sm-5 col-xs-6">
-                                            <i class="fa <?php echo $fileInfo['icon_class']; ?> fa-fw"></i>
+                                            <i class="fa <?php echo $fileInfo['icon']; ?> fa-fw"></i>
                                             <?php echo $name; ?>
                                         </span>
                                         <span class="file-size col-md-2 col-sm-2 col-xs-3 text-right">
-                                            <?php echo $fileInfo['file_size']; ?>
+                                            <?php echo $fileInfo['size']; ?>
                                         </span>
                                         <span class="file-modified col-md-3 col-sm-4 hidden-xs text-right">
-                                            <?php echo $fileInfo['mod_time']; ?>
+                                            <?php echo $fileInfo['time']; ?>
                                         </span>
                                     </div>
                                 </a>

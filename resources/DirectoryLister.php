@@ -50,24 +50,24 @@ class DirectoryLister {
         $this->_appURL = $this->_getAppUrl();
 
         // 加载基本配置
+        $this->_config = require_once($this->_appDir . '/config/config.default.php');
         if (file_exists($this->_appDir . '/config/config.php')) {
-            $this->_config = require_once($this->_appDir . '/config/config.php');
-        } else {
-            $this->_config = require_once($this->_appDir . '/config/config.default.php');
+            $this->_config = array_merge($this->_config,
+                require_once($this->_appDir . '/config/config.php'));
         }
 
         // 加载文件类型配置
+        $this->_fileTypes = require_once($this->_appDir . '/config/fileTypes.default.php');
         if (file_exists($this->_appDir . '/config/fileTypes.php')) {
-            $this->_fileTypes = require_once($this->_appDir . '/config/fileTypes.php');
-        } else {
-            $this->_fileTypes = require_once($this->_appDir . '/config/fileTypes.default.php');
+            $this->_fileTypes = array_merge($this->_fileTypes,
+                require_once($this->_appDir . '/config/fileTypes.php'));
         }
 
         // 加载文件渲染器配置
+        $this->_fileRenders = require_once($this->_appDir . '/config/fileRenders.default.php');
         if (file_exists($this->_appDir . '/config/fileRenders.php')) {
-            $this->_fileRenders = require_once($this->_appDir . '/config/fileRenders.php');
-        } else {
-            $this->_fileRenders = require_once($this->_appDir . '/config/fileRenders.default.php');
+            $this->_fileRenders = array_merge($this->_fileRenders,
+                require_once($this->_appDir . '/config/fileRenders.php'));
         }
 
         // 设置主题名称
@@ -783,12 +783,13 @@ class DirectoryLister {
 
                 // Add file info to the array
                 $directoryArray['..'] = array(
-                    'file_path'  => $directoryPath,
-                    'url_path'   => $this->_appURL . $urlPath,
-                    'file_size'  => '-',
-                    'mod_time'   => date('Y-m-d H:i:s', filemtime($realPath)),
-                    'icon_class' => 'fa-level-up',
-                    'sort'       => 0
+                    'name'      => $file,
+                    'file_path' => $directoryPath,
+                    'url_path'  => $this->_appURL . $urlPath,
+                    'size'      => '-',
+                    'time'      => date('Y-m-d H:i:s', filemtime($realPath)),
+                    'icon'      => 'fa-level-up',
+                    'sort'      => 0
                 );
 
             } elseif (!$this->_isHidden($relativePath)) {
@@ -813,13 +814,14 @@ class DirectoryLister {
                     $pathname = isset($matches[1]) ? $matches[1] : $relativePath;
                     //$directoryArray[pathinfo($relativePath, PATHINFO_BASENAME)] = array(
                     $directoryArray[$pathname] = array(
-                        'file_path'  => $relativePath,
-                        'url_path'   => $urlPath,
-                        'file_size'  => is_dir($realPath) ? '-' : $this->getFileSize($realPath),
-                        'mod_time'   => date('Y-m-d H:i:s', filemtime($realPath)),
-                        'icon_class' => $iconClass,
-                        'renderable' => $renderable,
-                        'sort'       => $sort
+                        'name'      => $file,
+                        'file_path' => $relativePath,
+                        'url_path'  => $urlPath,
+                        'size'      => is_dir($realPath) ? '-' : $this->getFileSize($realPath),
+                        'time'      => date('Y-m-d H:i:s', filemtime($realPath)),
+                        'icon'      => $iconClass,
+                        'renderable'=> $renderable,
+                        'sort'      => $sort
                     );
                 }
 
@@ -827,8 +829,12 @@ class DirectoryLister {
         }
 
         // Sort the array
-        $reverseSort = in_array($this->_directory, $this->_config['reverse_sort']);
-        $sortedArray = $this->_arraySort($directoryArray, $this->_config['list_sort_order'], $reverseSort);
+        if (file_exists($sortConfig = $this->absPath($directory) . '/.sort')) {
+            $sortConfig = trim(file_get_contents($sortConfig));
+        } else {
+            $sortConfig = $this->_config['list_sort'];
+        }
+        $sortedArray = $this->_arraySort($directoryArray, $sortConfig);
 
         // Return the array
         return $sortedArray;
@@ -845,95 +851,31 @@ class DirectoryLister {
      * @return array
      * @access protected
      */
-    protected function _arraySort($array, $sortMethod, $reverse = false) {
-        // Create empty arrays
-        $sortedArray = array();
-        $finalArray  = array();
+    protected function _arraySort($array, $config = 'name asc') {
+        $configs = explode(',', $config);
+        $sort = Array();
 
-        // Create new array of just the keys and sort it
-        $keys = array_keys($array);
+        // 默认排列顺序
+        foreach ($array as $k => $v) {
+            $keys[$k] = $v['sort'];
+        }
+        $sort[] = $keys;
+        $sort[] = SORT_ASC;
 
-        switch ($sortMethod) {
-            case 'asort':
-                asort($keys);
-                break;
-            case 'arsort':
-                arsort($keys);
-                break;
-            case 'ksort':
-                ksort($keys);
-                break;
-            case 'krsort':
-                krsort($keys);
-                break;
-            case 'natcasesort':
-                natcasesort($keys);
-                break;
-            case 'natsort':
-                natsort($keys);
-                break;
-            case 'shuffle':
-                shuffle($keys);
-                break;
+        // 自定义排列顺序
+        foreach ($configs as $c) {
+            $c = explode(' ', $c);
+            foreach ($array as $k => $v) {
+                $keys[$k] = $v[trim($c[0])];
+            }
+            $sort[] = $keys;
+            $sort[] = (trim($c[1]) == 'desc') ? SORT_DESC : SORT_ASC;
         }
 
-        // Loop through the sorted values and move over the data
-        if ($this->_config['list_folders_first']) {
+        $sort[] = &$array;
+        array_multisort(...$sort);
 
-            foreach ($keys as $key) {
-                if ($array[$key]['sort'] == 0) {
-                    $sortedArray['0'][$key] = $array[$key];
-                }
-            }
-
-            foreach ($keys as $key) {
-                if ($array[$key]['sort'] == 1) {
-                    $sortedArray[1][$key] = $array[$key];
-                }
-            }
-
-            foreach ($keys as $key) {
-                if ($array[$key]['sort'] == 2) {
-                    $sortedArray[2][$key] = $array[$key];
-                }
-            }
-
-            if ($reverse) {
-                $sortedArray[1] = array_reverse($sortedArray[1]);
-                $sortedArray[2] = array_reverse($sortedArray[2]);
-            }
-
-        } else {
-
-            foreach ($keys as $key) {
-                if ($array[$key]['sort'] == 0) {
-                    $sortedArray[0][$key] = $array[$key];
-                }
-            }
-
-            foreach ($keys as $key) {
-                if ($array[$key]['sort'] > 0) {
-                    $sortedArray[1][$key] = $array[$key];
-                }
-            }
-
-            if ($reverse) {
-                $sortedArray[1] = array_reverse($sortedArray[1]);
-            }
-
-        }
-
-        // Merge the arrays
-        foreach ($sortedArray as $array) {
-            if (empty($array)) continue;
-            foreach ($array as $key => $value) {
-                $finalArray[$key] = $value;
-            }
-        }
-
-        // Return sorted array
-        return $finalArray;
-
+        return $array;
     }
 
 
