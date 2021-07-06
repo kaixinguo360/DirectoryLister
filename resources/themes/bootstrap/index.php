@@ -122,7 +122,7 @@
             <?php endif; ?>
 
             <!-- 文件内容展示 -->
-            <?php $lister->renderFile(); ?>
+            <?php $lister->renderFile($_GET['render']); ?>
 
         <?php endif; ?>
 

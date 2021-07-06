@@ -51,7 +51,7 @@ return array(
     'tsv'   => 'PlainText',
 
     // Blank
-    'blank' => null
+    'blank' => 'Default',
 
 );
 

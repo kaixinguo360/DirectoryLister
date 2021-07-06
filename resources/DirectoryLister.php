@@ -296,7 +296,7 @@ class DirectoryLister {
      * @return string URL
      * @access public
      */
-    public function getURL($dir, $file) {
+    public function getURL($dir, $file = null) {
         if (empty($file)) {
             return '?dir=' . rawurlencode($dir);
         } else {
@@ -573,7 +573,7 @@ class DirectoryLister {
      * @return string bsolute path of dir or file
      * @access public
      */
-    public function renderFile() {
+    public function renderFile($render = null) {
         // Get files absolute path
         $dir = $this->getDir();
         $file = $this->getFile();
@@ -586,27 +586,22 @@ class DirectoryLister {
 
         // Is Directory
         if (is_dir($path)) {
-            $dir = $dir . '/' . $file;
-            $file = $this->findIndexFile($dir);
-            $path = $this->absPath($dir, $file);
-
-            if(substr($dir, 0, 2) == './') {
-                $dir = substr($dir, 2);
-            }
-
-            header('Location:' . $this->getURL($dir, $file));
+            header('Location: ' . $this->getURL($dir));
             return;
         }
 
-        // Get file extension
-        $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+        // Get file render
+        if (empty($render)) {
+            $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
 
-        if (isset($this->_fileRenders[$ext])) {
-            $render = $this->_fileRenders[$ext];
-        } else {
-            $render = $this->_fileRenders['blank'];
+            if (isset($this->_fileRenders[$ext])) {
+                $render = $this->_fileRenders[$ext];
+            } else {
+                $render = $this->_fileRenders['blank'];
+            }
         }
 
+        // Render
         if (!empty($render)) {
             if (file_exists($path)) {
                 $lister = $this;
@@ -618,6 +613,26 @@ class DirectoryLister {
         } else {
             echo "<div style='margin: 42px auto; width: fit-content; font-size: 20px;'>Unsupported File</div>";
         }
+    }
+
+
+    /**
+     * Get render of dir or file
+     *
+     * @param string $path
+     * @return string render of dir or file
+     * @access public
+     */
+    public function getRender($path) {
+        $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+
+        if (isset($this->_fileRenders[$ext])) {
+            $render = $this->_fileRenders[$ext];
+        } else {
+            $render = $this->_fileRenders['blank'];
+        }
+
+        return $render;
     }
 
 
@@ -713,7 +728,7 @@ class DirectoryLister {
      * @return array Array of the directory contents
      * @access protected
      */
-    protected function _readDirectory($directory, $sort = 'natcase') {
+    protected function _readDirectory($directory) {
 
         // Initialize array
         $directoryArray = array();
@@ -761,8 +776,10 @@ class DirectoryLister {
                 }
 
                 if (isset($this->_fileRenders[$fileExt])) {
+                    $renderable = true;
                     $render = $this->_fileRenders[$fileExt];
                 } else {
+                    $renderable = false;
                     $render = $this->_fileRenders['blank'];
                 }
 
@@ -802,11 +819,9 @@ class DirectoryLister {
 
                     if (is_dir($this->absPath($relativePath))) {
                         $urlPath = '?dir=' . rawurlencode($urlPath);
-                        $indexFile = $this->findIndexFile($relativePath);
-                        $renderable = !empty($indexFile);
+                        $renderable = false;
                     } else {
                         $urlPath = $this->absPath($urlPath);
-                        $renderable = !empty($render);
                     }
 
                     // Add the info to the main array by larry
