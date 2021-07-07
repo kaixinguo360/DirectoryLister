@@ -3,6 +3,7 @@
 $files = [];
 $exts = 'bmp, gif, jpg, jpeg, png, psd, tga, tif';
 $i = 0;
+$cur = 0;
 foreach($dirArray as $name => $fileInfo) {
     if (checkExtension($name, $exts)) {
         if ($file == $name) {
@@ -85,7 +86,7 @@ $next = ($end >= ($size - 1)) ? null : $files[$end];
         <!-- 上一页按钮 -->
         <?php if (!empty($prev)): ?>
             <a id="prevPage" class="button" href="<?php echo $lister->getURL($dir, $prev); ?>">
-                <img src="<?php echo $lister->absPath($dir) . '/' . $prev; ?>" class="preview" />
+                <img src="<?php echo $lister->absPath($dir, $prev); ?>" class="preview" />
                 <div class="overlay">
                     <i class="fa fa-angle-left fa-4x"></i>
                 </div>
@@ -101,14 +102,14 @@ $next = ($end >= ($size - 1)) ? null : $files[$end];
             <a id="image-<?php echo $i ?>"
                 name="<?php echo $files[$i] ?>"
                 onclick="changeImage(<?php echo $i ?>, '<?php echo $files[$i] ?>');">
-                <img src="<?php echo $lister->absPath($dir) . '/' . $files[$i]; ?>" class="preview" />
+                <img src="<?php echo $lister->absPath($dir, $files[$i]); ?>" class="preview" />
             </a>
         <?php endfor; ?>
 
         <!-- 下一页按钮 -->
         <?php if (!empty($next)): ?>
             <a id="nextPage" class="button" href="<?php echo $lister->getURL($dir, $next); ?>">
-                <img src="<?php echo $lister->absPath($dir) . '/' . $next; ?>" class="preview" />
+                <img src="<?php echo $lister->absPath($dir, $next); ?>" class="preview" />
                 <div class="overlay">
                     <i class="fa fa-angle-right fa-4x"></i>
                 </div>
@@ -129,7 +130,7 @@ $next = ($end >= ($size - 1)) ? null : $files[$end];
         <a style="left: 0" class="in-button" onclick="changeImage(cur - 1)">
             <i style="background: unset" class="overlay fa fa-angle-left fa-4x"></i>
         </a>
-		<img id="display" src="<?php echo $lister->absPath($dir) . '/' . $file; ?>" />
+		<img id="display" src="<?php echo $lister->absPath($dir, $file); ?>" />
         <a style="right: 0" class="in-button" onclick="changeImage(cur + 1)">
             <i style="background: unset" class="overlay fa fa-angle-right fa-4x"></i>
         </a>

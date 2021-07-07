@@ -277,7 +277,7 @@ class DirectoryLister {
         // 检查目录是否包含索引文件
         foreach ($this->_config['index_files'] as $indexFile) {
 
-            if (file_exists($this->absPath($dirPath) . '/' . $indexFile)) {
+            if (file_exists($this->absPath($dirPath, $indexFile))) {
 
                 return $indexFile;
 
@@ -844,7 +844,7 @@ class DirectoryLister {
         }
 
         // Sort the array
-        if (file_exists($sortConfig = $this->absPath($directory) . '/.sort')) {
+        if (file_exists($sortConfig = $this->absPath($directory, '.sort'))) {
             $sortConfig = trim(file_get_contents($sortConfig));
         } else {
             $sortConfig = $this->_config['list_sort'];
@@ -902,7 +902,7 @@ class DirectoryLister {
      * @access protected
      */
     protected function _isAuthorized($filePath) {
-        $path = $this->absPath($filePath) . '/.password';
+        $path = $this->absPath($filePath, '.password');
 
         // 获取目标密码
         if (file_exists($path)) {
