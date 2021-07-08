@@ -5,7 +5,7 @@ $exts = 'bmp, gif, jpg, jpeg, png, psd, tga, tif';
 $i = 0;
 $cur = 0;
 foreach($dirArray as $name => $fileInfo) {
-    if (checkExtension($name, $exts)) {
+    if (check_extension($name, $exts)) {
         if ($file == $name) {
             $cur = $i;
         }

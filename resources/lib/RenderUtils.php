@@ -18,7 +18,7 @@ function read_file_contents($file) {
 
 
 /**
- * 自动转换编码
+ * 自动转换编码至UTF-8
  * Copy From Internet
  */
 function to_utf8($raw) {
@@ -83,9 +83,9 @@ function to_utf8($raw) {
 
 
 /**
- * 合并多个路径
+ * 合并多个路径片段
  */
-function concatPath(...$args) {
+function concat_path(...$args) {
     foreach ($args as $arg) {
         $arg = trim($arg, '\\');
         if (empty($arg) || $arg == '.') {
@@ -124,15 +124,15 @@ function find_additional_resource($path, $exts, $dirs = '.', $fuzzySearch = true
 
     foreach ($dirs as $dir) {
         $dir = trim($dir);
-        $resourcePath = concatPath($fileDir, $dir);
+        $resourcePath = concat_path($fileDir, $dir);
         if (!file_exists($resourcePath)) {
             continue;
         }
         foreach ($exts as $ext) {
             $ext = ltrim(trim($ext), '.');
-            if (file_exists($fullPath = concatPath($resourcePath, $fileName . '.' . $ext))) {
+            if (file_exists($fullPath = concat_path($resourcePath, $fileName . '.' . $ext))) {
                 return $fullPath;
-            } else if (file_exists($fullPath = concatPath($resourcePath, $fileFullName . '.' . $ext))) {
+            } else if (file_exists($fullPath = concat_path($resourcePath, $fileFullName . '.' . $ext))) {
                 return $fullPath;
             }
         }
@@ -151,7 +151,7 @@ function find_additional_resource($path, $exts, $dirs = '.', $fuzzySearch = true
         }
         foreach ($dirs as $dir) {
             $dir = trim($dir);
-            $resourcePath = concatPath($fileDir, $dir);
+            $resourcePath = concat_path($fileDir, $dir);
             if (!file_exists($resourcePath)) {
                 continue;
             }
@@ -180,7 +180,13 @@ function find_additional_resource($path, $exts, $dirs = '.', $fuzzySearch = true
 }
 
 
-function checkExtension($file, $exts) {
+/**
+ * 检查传入的文件名是否匹配指定后缀
+ * @param string $file 待检查文件名
+ * @param string $exts 预期的扩展名, 逗号分隔
+ * @return boolean 是否匹配
+ */
+function check_extension($file, $exts) {
     $ext = pathinfo($file, PATHINFO_EXTENSION);
     $exts = explode(',', $exts);
     foreach ($exts as $e) {
@@ -189,5 +195,58 @@ function checkExtension($file, $exts) {
         }
     }
     return false;
+}
+
+
+/**
+ * 展示Zip内文件, 直接输出至客户端, 完成后exit, 终止程序运行
+ * Copy From Internet
+ * @param string $path 压缩文件路径
+ * @param string $name 压缩文件内文件的路径
+ */
+function display_zip_content($path, $name) {
+
+    // 清除缓冲区
+    ob_clean();
+
+    // 获得为协议路径
+    $path = 'zip://' . $path . '#' . $name;
+    $file = basename($path);
+
+    /**
+     * 这里应该加上安全验证之类的代码，例如：检测请求来源、验证UA标识等等
+     */
+
+    // 以只读方式打开文件，并强制使用二进制模式
+    $fileHandle=fopen($path, "rb");
+    if($fileHandle===false){
+        http_response_code(405);
+        exit("Can not open file: $file");
+    }
+
+    // 设置缓存
+    header("Cache-Control: public, max-age=315360000, immutable");
+
+    // 文件大小
+    //header("Content-Length: " . filesize($path));
+
+    // 文件类型
+    header("Content-Type: " . mime_content_type($path));
+    header("Accept-Ranges: bytes");
+
+    // 文件名
+    header('Content-Disposition: inline; filename="' . urlencode($file) . '"');
+
+    // 循环读取文件内容，并输出
+    while(!feof($fileHandle)) {
+        // 从文件指针 handle 读取最多 length 个字节（每次输出10k）
+        echo fread($fileHandle, 10240);
+    }
+
+    // 关闭文件流
+    fclose($fileHandle);
+
+    // 结束输出
+    exit;
 }
 
