@@ -35,8 +35,7 @@ $next = ($end >= ($size - 1)) ? null : $files[$end];
     align-items: center;
 }
 #display {
-    width: 100%;
-    max-width: 600px;
+    max-width: 100%;
 }
 #image-listing {
     display: flex;
@@ -74,11 +73,21 @@ $next = ($end >= ($size - 1)) ? null : $files[$end];
     bottom: 0;
     z-index: 10;
 }
+#main {
+    position: relative;
+    display: flex;
+    flex-flow: column;
+    justify-content: center;
+    align-items: center;
+    width: 100vw;
+    max-width: 600px;
+    min-height: calc(100vh - 360px);
+}
 </style>
 
 <script src="/resources/renders/Image/js/lightense.min.js"></script>
 
-<div id="container" class="container">
+<div id="container" class="container" onselectstart="return false">
 
     <!-- 列表 -->
     <div id="image-listing">
@@ -126,7 +135,7 @@ $next = ($end >= ($size - 1)) ? null : $files[$end];
     <div id="info"><?php echo ($cur + 1) . '/' . ($size - 1) ?></div>
 
     <!-- 正文 -->
-    <div style="position: relative">
+    <div id="main">
         <a style="left: 0" class="in-button" onclick="changeImage(cur - 1)">
             <i style="background: unset" class="overlay fa fa-angle-left fa-4x"></i>
         </a>

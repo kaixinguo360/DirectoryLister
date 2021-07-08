@@ -49,7 +49,6 @@ if ($render) {
                         <?php echo $name ?>
                     </a>
                 </li>
-                <div>
             <?php endfor; ?>
         <ul>
     </div>
