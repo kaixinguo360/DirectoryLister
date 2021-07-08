@@ -17,20 +17,15 @@ if ($size > 10 * 1024 * 1024 && !$_GET['force']) {
 <style>
 .title {
     font-size: 22px;
-    margin-top: 20px;
-    padding-bottom: 5px;
-    font-weight: 500;
-    line-height: 1.1;
-    color: inherit;
+    margin-right: 8px;
 }
 .content {
     color: currentColor;
 }
 .bar {
     display: flex;
-    margin-bottom: 20px;
-    border-bottom: solid 1px #dadada;
     align-items: center;
+    margin: 8px 0 16px;
 }
 .linebr {
     clear: both; /* 清除左右浮动 */
@@ -63,11 +58,12 @@ function toggleWrap() {
 <div class="container readme-background">
     <div class="readme">
         <div class="bar">
-            <div style="flex: 1 0 auto" class="title"><?php echo $file ?></div>
-            <div style="flex: 0 1 auto" onclick="toggleWrap()">
+            <div style="flex: 1 0" class="title"><?php echo $file ?></div>
+            <div style="flex: 0 1 auto; cursor: pointer;" onclick="toggleWrap()">
                 <i class="fa fa-exchange"></i>
             </div>
         </div>
+        <hr>
         <?php if (!empty(error)): ?>
         <pre id="content" class="content linebr"><?php echo htmlentities($text) ?></pre>
         <?php else: ?>

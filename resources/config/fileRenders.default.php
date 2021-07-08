@@ -2,6 +2,12 @@
 
 return array(
 
+    // Zip
+    'zip'   => 'Zip',
+    'jar'   => 'Zip',
+    'apk'   => 'Zip',
+    'cbz'   => 'Zip',
+
     // Image
     'bmp'   => 'Image',
     'gif'   => 'Image',
