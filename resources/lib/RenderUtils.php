@@ -199,6 +199,35 @@ function check_extension($file, $exts) {
 
 
 /**
+ * 读取Zip内所有文件名, 返回匹配指定正则表达式的条目
+ * @param string $path 压缩文件路径
+ * @param string $regex 压缩文件内文件的路径的正则表达式 (null: 输出全部)
+ * @param string $sort 返回结果排序方式 (null: 不排序, true: 正序, false: 倒序)
+ * @return Array 包含所有匹配条目的数组
+ */
+function list_zip_contents($path, $regex = null, $sort = null) {
+    $za = new ZipArchive();
+    $za->open($path);
+    $files = Array();
+    for($i = 0; $i < $za->numFiles; $i++) {
+        $name = $za->getNameIndex($i, \ZipArchive::FL_ENC_RAW);
+        $name = to_utf8($name);
+        if (empty($regex) || preg_match($regex, $name)) {
+            $files[] = $name;
+        }
+    }
+    if ($sort !== null) {
+        if ($sort) {
+            sort($files);
+        } else {
+            rsort($files);
+        }
+    }
+    return $files;
+}
+
+
+/**
  * 展示Zip内文件, 直接输出至客户端, 完成后exit, 终止程序运行
  * Copy From Internet
  * @param string $path 压缩文件路径

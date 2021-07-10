@@ -7,8 +7,7 @@ if (!empty($name)) {
     exit;
 }
 
-$za = new ZipArchive(); 
-$za->open($path);
+$files = list_zip_contents($path, null, true);
 
 $baseURL = $lister->getURL($dir, $file);
 if ($render) {
@@ -39,17 +38,13 @@ if ($render) {
         </div>
         <hr>
         <ul>
-            <?php for( $i = 0; $i < $za->numFiles; $i++ ): ?>
-                <?php
-                    $stat = $za->statIndex($i, \ZipArchive::FL_ENC_RAW);
-                    $name = to_utf8($stat['name']);
-                ?>
+            <?php foreach($files as $name): ?>
                 <li>
                     <a href="<?php echo $baseURL . '&name=' . rawurlencode($name) ?>" >
                         <?php echo $name ?>
                     </a>
                 </li>
-            <?php endfor; ?>
+            <?php endforeach; ?>
         <ul>
     </div>
 </div>
