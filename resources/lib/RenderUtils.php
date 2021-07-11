@@ -279,3 +279,19 @@ function display_zip_content($path, $name) {
     exit;
 }
 
+
+/**
+ * 调用展示器, 直接输出至客户端
+ */
+function display_with_viewer($viewer, $data) {
+    if (file_exists(__DIR__ . '/../viewers/' . $viewer . '/viewer.php')) {
+        // 优先调用viewers文件夹下的公共展示器
+        require( __DIR__ . '/../viewers/' . $viewer . '/viewer.php');
+    } elseif (file_exists(__DIR__ . '/../renders/' . $viewer . '/viewer.php')) {
+        // 若从公共展示器中查找无果, 则从renders目录下渲染器自带的展示器中继续查找
+        require( __DIR__ . '/../renders/' . $viewer . '/viewer.php');
+    } else {
+        echo "<div style='margin: 42px auto; width: fit-content; font-size: 20px;'>500 Internal Server Error</div>";
+    }
+}
+
