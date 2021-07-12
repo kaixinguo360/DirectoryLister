@@ -2,6 +2,9 @@
 
 return array(
 
+    // URL
+    'url'   => 'URL',
+
     // Zip
     'zip'   => 'Zip',
     'jar'   => 'Zip',
